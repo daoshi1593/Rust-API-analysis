@@ -173,7 +173,6 @@ cargo clippy --all-targets -- -D warnings  # 代码规范检查
 ```
 
 ### 💬 沟通方式
-- 讨论区：[GitHub Discussions](discussions/)
 - 紧急问题：daoshi1593@email.com
 
 ## 📃 许可证
