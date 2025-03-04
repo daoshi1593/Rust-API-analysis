@@ -171,9 +171,5 @@ cargo test --all      # 运行所有测试
 cargo test --doc      # 文档测试
 cargo clippy --all-targets -- -D warnings  # 代码规范检查
 ```
-
-### 💬 沟通方式
-- 紧急问题：daoshi1593@email.com
-
 ## 📃 许可证
 贡献即表示您同意遵守 [MIT 许可证](LICENSE) 条款
