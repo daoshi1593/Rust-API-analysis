@@ -1,50 +1,51 @@
-# 代码解析工具集
+# Rust API 分析工具
 
-这个仓库提供了一套用于多种编程语言的代码解析工具集，可以帮助开发者分析和理解不同语言项目的结构和函数组织。(只支持linux环境)
+一个用于分析多种编程语言 API 的工具，支持 Rust、Python、JavaScript、Java、C 和 C++。
 
-## 功能特点
+## 功能特性
 
-- 支持多种编程语言:Rust、Python、JavaScript、Java、C和C++
-- 统一的命令行接口，易于使用
-- 分析源代码结构，提取函数、方法和类信息
-- 自动生成代码结构报告
-- 模块化设计，易于扩展支持新的语言
+- 支持多种编程语言的 API 分析
+  - Rust: 使用 syn 2.0 进行语法分析
+  - Python: 使用 ast 模块解析
+  - JavaScript: 使用 esprima 解析
+  - Java: 使用 JavaParser 解析
+  - C/C++: 使用 libclang 解析
+- 自动提取函数声明和定义
+- 支持宏定义分析
+- 支持继承关系分析
+- 生成详细的 API 文档
+- 跨平台支持
+- 统一的命令行接口
 - 支持递归分析项目依赖
 - 支持自定义输出格式
 - 支持忽略特定目录和文件
 - 交互式命令行界面
 - 自动环境检测和配置
 
-## 快速开始
+## 环境要求
 
-### 系统要求
+- Rust 1.70+
+- Python 3.8+
+- Node.js 14+
+- Java 11+
+- LLVM/Clang 14+
 
-- Linux 操作系统
-- Rust 1.70.0 或更高版本
-- Python 3.8 或更高版本（用于Python解析器）
-- Node.js 14.0.0 或更高版本（用于JavaScript解析器）
-- JDK 11 或更高版本（用于Java解析器）
-- GCC/G++ 9.0 或更高版本（用于C/C++解析器）
+## 安装
 
-### 安装
-
+1. 克隆仓库：
 ```bash
-# 克隆仓库
 git clone https://github.com/daoshi1593/Rust-API-analysis.git
 cd Rust-API-analysis
-
-# 编译控制器
-cd src
-rustc main.rs -o parser
-cd ..
-
-# 设置脚本执行权限
-chmod +x scripts/setup.sh
 ```
 
-### 使用方法
+2. 运行安装脚本：
+```bash
+./scripts/setup.sh
+```
 
-#### 交互式界面
+## 使用方法
+
+### 交互式界面
 
 推荐使用交互式界面，它提供了更友好的用户体验：
 
@@ -58,7 +59,7 @@ chmod +x scripts/setup.sh
 3. 运行解析器：选择语言并分析项目
 4. 查看帮助：显示详细的使用说明
 
-#### 命令行方式
+### 命令行方式
 
 也可以直接使用命令行方式：
 
@@ -93,97 +94,6 @@ chmod +x scripts/setup.sh
 
 # 指定文件扩展名
 ./parser python /path/to/project --extensions "py,pyx"
-```
-
-## 项目结构
-
-```
-Rust-API-analysis
-├─ .gitignore
-├─ Cargo.lock
-├─ Cargo.toml
-├─ LICENSE
-├─ README.md
-├─ git_s.sh
-├─ src
-│    ├─ main.rs          # 主控制器
-│    ├─ pythonAPI.py     # Python解析器
-│    └─ rustAPI.rs       # Rust解析器
-└─ scripts
-    └─ auto_comment.py   # 自动注释脚本
-```
-
-## 支持的语言
-
-### Python
-
-Python解析器可以提取Python文件中的函数、类和方法定义。
-
-特性：
-- 支持异步函数分析
-- 支持装饰器识别
-- 支持类型注解解析
-- 支持嵌套类和方法
-
-```bash
-./parser python /path/to/python/project
-```
-
-### Rust
-
-Rust解析器使用syn库分析Rust项目，提取函数、方法、trait实现等。
-
-特性：
-- 支持宏展开分析
-- 支持泛型函数解析
-- 支持trait实现识别
-- 支持模块结构分析
-
-```bash
-./parser rust /path/to/rust/project
-```
-
-### JavaScript/TypeScript
-
-JavaScript解析器支持分析现代JS/TS项目，包括函数、类、方法和箭头函数等。
-
-特性：
-- 支持ES6+语法
-- 支持TypeScript类型
-- 支持装饰器解析
-- 支持模块导入分析
-
-```bash
-./parser javascript /path/to/js/project
-```
-
-### Java
-
-Java解析器提取Java项目中的类、方法和接口定义。
-
-特性：
-- 支持注解解析
-- 支持泛型类型
-- 支持内部类分析
-- 支持接口实现识别
-
-```bash
-./parser java /path/to/java/project
-```
-
-### C/C++
-
-C和C++解析器分析C/C++项目中的函数、结构体和类定义。
-
-特性：
-- 支持宏定义解析
-- 支持模板分析
-- 支持命名空间
-- 支持多文件项目
-
-```bash
-./parser c /path/to/c/project
-./parser cpp /path/to/cpp/project
 ```
 
 ## 输出格式
@@ -279,22 +189,37 @@ A: 使用 `--recursive` 选项可以递归分析项目依赖，但请注意这�
 
 A: 可以通过 `--format` 选项选择输出格式，支持 "text"、"json" 和 "html" 格式。
 
-## 扩展支持新语言
+## 项目结构
 
-要添加对新语言的支持:
+```
+.
+├── src/                    # 源代码目录
+│   ├── rustAPI.rs         # Rust API 分析器
+│   ├── pythonAPI.py       # Python API 分析器
+│   ├── javascriptAPI.js   # JavaScript API 分析器
+│   ├── JavaAPI.java       # Java API 分析器
+│   ├── cAPI.c            # C API 分析器
+│   └── cppAPI.cpp        # C++ API 分析器
+├── tests/                 # 测试用例
+├── scripts/              # 脚本文件
+│   └── setup.sh         # 环境配置脚本
+└── README.md            # 项目文档
+```
 
-1. 在`parsers/`目录下创建新的解析器文件（例如:`goAPI.go`）
-2. 在`controller.rs`中添加对应的处理函数和匹配规则
-3. 实现解析器，确保它能接收目录路径作为命令行参数
-4. 生成与其他解析器兼容的输出格式
+## 开发
 
-## 依赖项
+### 添加新的语言支持
 
-- Rust 1.70.0+（用于控制器和Rust解析器）
-- Python 3.8+（用于Python解析器）
-- Node.js 14.0.0+（用于JavaScript解析器）
-- JDK 11+（用于Java解析器）
-- GCC/G++ 9.0+（用于C/C++解析器）
+1. 在 `src` 目录下创建新的分析器文件
+2. 实现必要的解析逻辑
+3. 更新 `setup.sh` 脚本以支持新语言
+4. 添加相应的测试用例
+
+### 运行测试
+
+```bash
+cargo test
+```
 
 ## 性能优化建议
 
@@ -303,7 +228,7 @@ A: 可以通过 `--format` 选项选择输出格式，支持 "text"、"json" 和
 3. 考虑使用 `--parallel` 选项启用并行处理
 4. 对于频繁使用的项目，可以缓存解析结果
 
-## 贡献指南
+## 贡献
 
 欢迎贡献！如果您想改进现有解析器或添加新语言支持，请遵循以下步骤:
 
@@ -335,3 +260,10 @@ A: 可以通过 `--format` 选项选择输出格式，支持 "text"、"json" 和
 - 添加环境配置向导
 - 改进用户交互体验
 - 添加更多配置选项
+
+### v1.2.0 (2024-03-26)
+- 升级 syn 到 2.0 版本
+- 优化 Rust API 分析器
+- 添加多语言支持
+- 完善项目文档
+- 添加测试用例
