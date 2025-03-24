@@ -2,8 +2,9 @@ use std::env;
 use std::fs::{self, File as FsFile};
 use std::io::Write;
 use std::path::Path;
-use syn::{visit::Visit, File};
+use syn::{visit::Visit, File, parse_file, Item, ImplItem, TraitItem};
 use walkdir::WalkDir;
+use anyhow::{Result, anyhow};
 
 struct FunctionVisitor {
     functions: Vec<String>,
@@ -11,27 +12,39 @@ struct FunctionVisitor {
 
 impl<'ast> Visit<'ast> for FunctionVisitor {
     // 提取普通函数
-    fn visit_item_fn(&mut self, node: &'ast syn::ItemFn) {
-        self.functions.push(node.sig.ident.to_string());
-        syn::visit::visit_item_fn(self, node);
+    fn visit_item(&mut self, node: &'ast Item) {
+        if let Item::Fn(item_fn) = node {
+            self.functions.push(item_fn.sig.ident.to_string());
+        }
+        syn::visit::visit_item(self, node);
     }
 
     // 提取impl块中的方法
-    fn visit_impl_item_fn(&mut self, node: &'ast syn::ImplItemFn) {
-        self.functions.push(node.sig.ident.to_string());
-        syn::visit::visit_impl_item_fn(self, node);
+    fn visit_impl_item(&mut self, node: &'ast ImplItem) {
+        match node {
+            ImplItem::Fn(method) => {
+                self.functions.push(method.sig.ident.to_string());
+            }
+            _ => {}
+        }
+        syn::visit::visit_impl_item(self, node);
     }
 
     // 提取trait中的方法
-    fn visit_trait_item_fn(&mut self, node: &'ast syn::TraitItemFn) {
-        self.functions.push(node.sig.ident.to_string());
-        syn::visit::visit_trait_item_fn(self, node);
+    fn visit_trait_item(&mut self, node: &'ast TraitItem) {
+        match node {
+            TraitItem::Fn(method) => {
+                self.functions.push(method.sig.ident.to_string());
+            }
+            _ => {}
+        }
+        syn::visit::visit_trait_item(self, node);
     }
 }
 
-fn process_file(path: &Path) -> Result<Vec<String>, anyhow::Error> {
+fn process_file(path: &Path) -> Result<Vec<String>> {
     let content = fs::read_to_string(path)?;
-    let syntax_tree: File = syn::parse_file(&content)?;
+    let syntax_tree: File = parse_file(&content)?;
     let mut visitor = FunctionVisitor {
         functions: Vec::new(),
     };
@@ -39,7 +52,7 @@ fn process_file(path: &Path) -> Result<Vec<String>, anyhow::Error> {
     Ok(visitor.functions)
 }
 
-fn main() -> Result<(), anyhow::Error> {
+fn main() -> Result<()> {
     // 获取命令行参数
     let args: Vec<String> = env::args().collect();
 
@@ -64,10 +77,10 @@ fn main() -> Result<(), anyhow::Error> {
     // 检查路径是否存在
     let dir_path = Path::new(&dir);
     if !dir_path.exists() {
-        return Err(anyhow::anyhow!("目录 '{}' 不存在", dir));
+        return Err(anyhow!("目录 '{}' 不存在", dir));
     }
     if !dir_path.is_dir() {
-        return Err(anyhow::anyhow!("路径 '{}' 不是一个目录", dir));
+        return Err(anyhow!("路径 '{}' 不是一个目录", dir));
     }
 
     // 构建日志文件路径

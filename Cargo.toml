@@ -1,8 +1,21 @@
 [package]
-name = "extract_functions"
-version = "0.1.0"
+name = "code-parser"
+version = "1.1.0"
 edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "A tool for analyzing code structure in multiple programming languages"
+license = "MIT"
+
+[lib]
+name = "code_parser"
+path = "src/rustAPI.rs"
+
 [dependencies]
-syn = { version = "2.0", features = ["full", "visit", "parsing"] }
+clap = "2.33"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dirs = "3.0"
+tempfile = "3.2"
+syn = { version = "2.0", features = ["full", "visit", "parsing", "extra-traits"] }
 walkdir = "2.3"
 anyhow = "1.0"
