@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical
-from textual.widgets import Header, Footer, Button, Static, Input
+from textual.containers import Container, Horizontal, Vertical
+from textual.widgets import Header, Footer, Button, Static, Input, DataTable
 from textual.screen import Screen
 from textual import events
 import subprocess
@@ -117,6 +117,42 @@ class ProjectAnalysis(Screen):
             except subprocess.CalledProcessError as e:
                 self.notify(f"分析失败：{str(e)}", severity="error")
 
+class Dashboard(Screen):
+    """分析仪表板界面"""
+    
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Container(
+            Horizontal(
+                Container(
+                    Static("API 列表", classes="panel-title"),
+                    DataTable(id="api_list"),
+                    classes="panel",
+                ),
+                Container(
+                    Static("详细信息", classes="panel-title"),
+                    Static("", id="api_details"),
+                    classes="panel",
+                ),
+                classes="dashboard",
+            ),
+            Button("返回", id="back", variant="primary"),
+            classes="dashboard-container",
+        )
+        yield Footer()
+
+    def on_mount(self) -> None:
+        table = self.query_one("#api_list")
+        table.add_columns("名称", "类型", "参数", "返回值")
+        # 这里添加示例数据
+        table.add_rows([
+            ["get_user", "函数", "id: int", "User"],
+            ["create_post", "方法", "title: str, content: str", "Post"],
+        ])
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.app.pop_screen()
+
 class APIAnalyzer(App):
     """API 分析工具主应用"""
     
@@ -148,7 +184,6 @@ class APIAnalyzer(App):
         margin: 1 2;
         padding: 1;
         color: #ffffff;
-        font-size: 1.2em;
     }
     
     .main {
@@ -156,7 +191,7 @@ class APIAnalyzer(App):
         height: auto;
         background: #2d2d2d;
         padding: 1;
-        border-radius: 1;
+        border: solid #3d3d3d;
     }
     
     .buttons {
@@ -169,7 +204,7 @@ class APIAnalyzer(App):
         height: auto;
         background: #2d2d2d;
         padding: 1;
-        border-radius: 1;
+        border: solid #3d3d3d;
     }
     
     .env_status {
@@ -183,7 +218,35 @@ class APIAnalyzer(App):
         height: auto;
         background: #2d2d2d;
         padding: 1;
-        border-radius: 1;
+        border: solid #3d3d3d;
+    }
+    
+    .dashboard-container {
+        width: 100%;
+        height: 100%;
+        background: #2d2d2d;
+        padding: 1;
+    }
+    
+    .dashboard {
+        height: 1fr;
+        margin: 1;
+    }
+    
+    .panel {
+        width: 1fr;
+        height: 100%;
+        background: #1a1a1a;
+        border: solid #3d3d3d;
+        padding: 1;
+    }
+    
+    .panel-title {
+        text-style: bold;
+        color: #ffffff;
+        padding: 1;
+        background: #2d2d2d;
+        margin-bottom: 1;
     }
     
     Button {
@@ -192,9 +255,7 @@ class APIAnalyzer(App):
         background: #3d3d3d;
         color: #ffffff;
         border: none;
-        border-radius: 1;
         padding: 1;
-        transition: background 500ms;
     }
     
     Button:hover {
@@ -224,7 +285,6 @@ class APIAnalyzer(App):
         background: #3d3d3d;
         color: #ffffff;
         border: none;
-        border-radius: 1;
         padding: 1;
     }
     
@@ -234,6 +294,21 @@ class APIAnalyzer(App):
     }
     
     #path_input {
+        background: #3d3d3d;
+        color: #ffffff;
+    }
+    
+    DataTable {
+        height: 1fr;
+        background: #1a1a1a;
+    }
+    
+    DataTable > .datatable--header {
+        background: #2d2d2d;
+        color: #ffffff;
+    }
+    
+    DataTable > .datatable--cursor {
         background: #3d3d3d;
         color: #ffffff;
     }
