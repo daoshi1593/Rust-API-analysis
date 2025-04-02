@@ -64,36 +64,47 @@ cd Rust-API-analysis
 也可以直接使用命令行方式：
 
 ```bash
-./src/parser <语言> <目录路径> [选项]
+# 分析 Rust 项目
+./src/rustAPI <目录路径>
+
+# 分析 Python 项目
+python src/pythonAPI.py <目录路径>
+
+# 分析 JavaScript 项目
+node src/javascriptAPI.js <目录路径>
+
+# 分析 Java 项目
+javac src/JavaAPI.java
+java -cp . src.JavaAPI <目录路径>
+
+# 分析 C/C++ 项目
+./src/parser <目录路径>
 ```
 
 #### 基本用法示例:
 
 ```bash
-# 分析Python项目
-./parser python /path/to/python/project
+# 分析 Rust 项目
+./src/rustAPI /path/to/rust/project
 
-# 分析Rust项目
-./parser rust /path/to/rust/project
+# 分析 Python 项目
+python src/pythonAPI.py /path/to/python/project
 
-# 分析JavaScript项目
-./parser javascript /path/to/js/project
+# 分析 JavaScript 项目
+node src/javascriptAPI.js /path/to/js/project
 ```
 
 #### 高级选项:
 
 ```bash
-# 忽略特定目录
-./parser python /path/to/project --ignore-dirs "tests,venv"
-
-# 自定义输出文件
-./parser rust /path/to/project --output analysis_report.txt
+# 指定输出文件
+./src/rustAPI /path/to/project > output.txt
 
 # 递归分析依赖
-./parser python /path/to/project --recursive
+python src/pythonAPI.py /path/to/project --recursive
 
-# 指定文件扩展名
-./parser python /path/to/project --extensions "py,pyx"
+# 忽略特定目录
+node src/javascriptAPI.js /path/to/project --ignore "node_modules,tests"
 ```
 
 ## 输出格式
@@ -175,7 +186,7 @@ export PARSER_MAX_DEPTH=5
 A: 对于大型项目，建议使用以下选项：
 - 使用 `--ignore-dirs` 忽略不必要的目录
 - 设置 `--max-depth` 限制递归深度
-- 使用 `--output` 指定输出文件
+- 使用重定向将输出保存到文件
 
 ### Q: 解析器支持哪些编码格式？
 
