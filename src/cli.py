@@ -2,8 +2,9 @@
 import os
 import sys
 import subprocess
-from typing import List, Dict, Any
 import json
+from typing import List, Dict, Any
+from pathlib import Path
 
 class Dashboard:
     """API 分析仪表板"""
@@ -12,9 +13,24 @@ class Dashboard:
         self.term_size = os.get_terminal_size()
         self.width = self.term_size.columns
         self.height = self.term_size.lines
-        self.api_data = []
-        self.current_section = 0
-        self.sections = ["Project Info", "API Summary", "Dependencies", "Analysis", "Source"]
+        self.current_file = None
+        self.current_language = None
+        self.analysis_results = {}
+        self.config = self.load_config()
+        
+    def load_config(self) -> Dict:
+        """加载配置文件"""
+        config_path = os.path.expanduser("~/.parser/config.json")
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        return {
+            "ignore_dirs": ["tests", "node_modules", "target", "venv", "__pycache__"],
+            "output_format": "text",
+            "max_depth": 5,
+            "log_level": "info",
+            "output_dir": os.path.expanduser("~/.parser/output")
+        }
         
     def clear_screen(self):
         """清空屏幕"""
@@ -35,78 +51,102 @@ class Dashboard:
         for line in content:
             print(line)
             
-    def format_api(self, name: str, info: str) -> str:
-        """格式化 API 信息显示"""
+    def format_info(self, name: str, info: str) -> str:
+        """格式化信息显示"""
         return f"\033[90m{name:>20}\033[0m \033[32m{info}\033[0m"
         
-    def display_project_info(self):
-        """显示项目信息"""
-        return [
-            self.format_api("Project Name:", "Rust-API-analysis"),
-            self.format_api("Description:", "Rust API 分析工具"),
-            self.format_api("Language:", "Rust"),
-            self.format_api("Version:", "0.1.0"),
-        ]
+    def check_environment(self) -> Dict[str, bool]:
+        """检查环境"""
+        env_status = {}
+        tools = {
+            "Rust": "rustc --version",
+            "Python": "python3 --version",
+            "Node.js": "node --version",
+            "Java": "java -version",
+            "Clang": "clang --version"
+        }
         
-    def display_api_summary(self):
-        """显示 API 统计信息"""
-        return [
-            self.format_api("Total APIs:", "42"),
-            self.format_api("Public Functions:", "15"),
-            self.format_api("Public Structs:", "8"),
-            self.format_api("Public Traits:", "4"),
-            self.format_api("Public Modules:", "6"),
-        ]
+        for name, cmd in tools.items():
+            try:
+                subprocess.run(cmd.split(), capture_output=True, check=True)
+                env_status[name] = True
+            except:
+                env_status[name] = False
+                
+        return env_status
         
-    def display_dependencies(self):
-        """显示依赖信息"""
+    def run_analyzer(self, language: str, directory: str):
+        """运行相应的分析器"""
+        analyzers = {
+            "rust": ["./src/rustAPI", directory],
+            "python": ["python3", "src/pythonAPI.py", directory],
+            "javascript": ["node", "src/javascriptAPI.js", directory],
+            "java": ["java", "-cp", ".", "src.JavaAPI", directory],
+            "c": ["./src/parser", directory],
+            "cpp": ["./src/parser", directory]
+        }
+        
+        if language not in analyzers:
+            print(f"\033[31m错误：不支持的语言 {language}\033[0m")
+            return
+            
+        try:
+            cmd = analyzers[language]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                self.analysis_results = json.loads(result.stdout)
+                self.current_language = language
+                print(f"\033[32m分析完成！\033[0m")
+            else:
+                print(f"\033[31m分析失败：{result.stderr}\033[0m")
+        except Exception as e:
+            print(f"\033[31m执行出错：{str(e)}\033[0m")
+            
+    def display_environment(self):
+        """显示环境状态"""
+        env_status = self.check_environment()
         return [
-            self.format_api("syn:", "^1.0"),
-            self.format_api("quote:", "^1.0"),
-            self.format_api("proc-macro2:", "^1.0"),
-            self.format_api("serde:", "^1.0"),
-            self.format_api("serde_json:", "^1.0"),
+            f"\033[{'32' if env_status['Rust'] else '31'}m{'✓' if env_status['Rust'] else '✗'}\033[0m Rust",
+            f"\033[{'32' if env_status['Python'] else '31'}m{'✓' if env_status['Python'] else '✗'}\033[0m Python",
+            f"\033[{'32' if env_status['Node.js'] else '31'}m{'✓' if env_status['Node.js'] else '✗'}\033[0m Node.js",
+            f"\033[{'32' if env_status['Java'] else '31'}m{'✓' if env_status['Java'] else '✗'}\033[0m Java",
+            f"\033[{'32' if env_status['Clang'] else '31'}m{'✓' if env_status['Clang'] else '✗'}\033[0m Clang"
         ]
         
     def display_analysis(self):
         """显示分析结果"""
-        return [
-            "\033[36m[✓]\033[0m API 文档覆盖率: 85%",
-            "\033[36m[✓]\033[0m 公共 API 稳定性检查通过",
-            "\033[33m[!]\033[0m 发现 3 个不稳定的 API",
-            "\033[33m[!]\033[0m 发现 2 个废弃的 API",
-            "\033[32m[+]\033[0m 建议: 考虑为 UserConfig 添加更多文档",
-        ]
-        
-    def display_source(self):
-        """显示源代码示例"""
-        return [
-            "\033[90m1\033[0m  #[derive(Debug)]",
-            "\033[90m2\033[0m  pub struct APIAnalyzer {",
-            "\033[90m3\033[0m      config: Config,",
-            "\033[90m4\033[0m      parser: Parser,",
-            "\033[90m5\033[0m      results: Vec<Analysis>,",
-            "\033[90m6\033[0m  }",
-        ]
+        if not self.analysis_results:
+            return ["尚未进行分析"]
+            
+        result = []
+        for file_info in self.analysis_results.get("files", []):
+            result.append(f"\033[36m文件：{file_info['path']}\033[0m")
+            for func in file_info.get("functions", []):
+                result.append(f"  \033[32m- {func['name']}\033[0m")
+            for cls in file_info.get("classes", []):
+                result.append(f"  \033[33m+ {cls['name']}\033[0m")
+                for method in cls.get("methods", []):
+                    result.append(f"    \033[32m- {method['name']}\033[0m")
+        return result
         
     def display(self):
         """显示整个界面"""
         self.clear_screen()
         
         # 显示状态信息
-        self.print_header("[API Analysis] 正在分析 src/lib.rs", "1;36")
+        if self.current_language:
+            self.print_header(f"[API Analysis] 正在分析 {self.current_language} 项目", "1;36")
+        else:
+            self.print_header("[API Analysis] 等待选择项目", "1;36")
         
         # 显示各个区域
-        sections_content = {
-            "Project Info": self.display_project_info(),
-            "API Summary": self.display_api_summary(),
-            "Dependencies": self.display_dependencies(),
-            "Analysis": self.display_analysis(),
-            "Source": self.display_source()
+        sections = {
+            "Environment": self.display_environment(),
+            "Analysis": self.display_analysis()
         }
         
-        for section in self.sections:
-            self.print_section(section, sections_content[section])
+        for title, content in sections.items():
+            self.print_section(title, content)
             print()
             
     def run(self):
@@ -114,17 +154,28 @@ class Dashboard:
         try:
             while True:
                 self.display()
-                cmd = input("\033[1;32mapi>\033[0m ")
+                cmd = input("\033[1;32mapi>\033[0m ").strip()
+                
                 if cmd in ["q", "quit"]:
                     break
                 elif cmd == "refresh":
                     continue
                 elif cmd == "help":
                     print("\nCommands:")
-                    print("  refresh  刷新显示")
-                    print("  q/quit   退出程序")
-                    print("  help     显示帮助")
+                    print("  analyze <language> <directory>  分析指定语言的项目")
+                    print("  refresh                        刷新显示")
+                    print("  q/quit                        退出程序")
+                    print("  help                          显示帮助")
+                    print("\nSupported languages:")
+                    print("  rust, python, javascript, java, c, cpp")
                     input("\nPress Enter to continue...")
+                elif cmd.startswith("analyze"):
+                    parts = cmd.split()
+                    if len(parts) >= 3:
+                        self.run_analyzer(parts[1], parts[2])
+                    else:
+                        print("用法: analyze <language> <directory>")
+                    input("Press Enter to continue...")
                 else:
                     print(f"Unknown command: {cmd}")
                     print("Type 'help' for available commands")
