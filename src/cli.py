@@ -94,7 +94,25 @@ class Dashboard:
             cmd = analyzers[language]
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
-                self.analysis_results = json.loads(result.stdout)
+                # 读取分析结果文件
+                log_file = None
+                if language == "rust":
+                    log_file = os.path.join(directory, "fns_log")
+                elif language == "python":
+                    log_file = os.path.join(directory, "python_fns_log")
+                
+                if log_file and os.path.exists(log_file):
+                    with open(log_file, 'r') as f:
+                        content = f.read()
+                        self.analysis_results = self.parse_log_content(content)
+                else:
+                    # 尝试直接解析输出
+                    try:
+                        self.analysis_results = json.loads(result.stdout)
+                    except json.JSONDecodeError:
+                        # 如果不是 JSON 格式，则解析文本输出
+                        self.analysis_results = self.parse_log_content(result.stdout)
+                
                 self.current_language = language
                 print(f"\033[32m分析完成！\033[0m")
             else:
@@ -102,6 +120,49 @@ class Dashboard:
         except Exception as e:
             print(f"\033[31m执行出错：{str(e)}\033[0m")
             
+    def parse_log_content(self, content: str) -> Dict:
+        """解析日志内容为统一格式"""
+        result = {"files": []}
+        current_file = None
+        
+        for line in content.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+                
+            if line.startswith("文件:"):
+                if current_file:
+                    result["files"].append(current_file)
+                current_file = {
+                    "path": line[4:].strip(),
+                    "functions": [],
+                    "classes": []
+                }
+            elif line.startswith("  - "):
+                if current_file:
+                    func_name = line[4:].strip()
+                    if "." in func_name:
+                        # 这是一个类方法
+                        class_name, method_name = func_name.split(".")
+                        # 查找或创建类
+                        class_obj = None
+                        for cls in current_file["classes"]:
+                            if cls["name"] == class_name:
+                                class_obj = cls
+                                break
+                        if not class_obj:
+                            class_obj = {"name": class_name, "methods": []}
+                            current_file["classes"].append(class_obj)
+                        class_obj["methods"].append({"name": method_name})
+                    else:
+                        # 这是一个普通函数
+                        current_file["functions"].append({"name": func_name})
+                        
+        if current_file:
+            result["files"].append(current_file)
+            
+        return result
+        
     def display_environment(self):
         """显示环境状态"""
         env_status = self.check_environment()
