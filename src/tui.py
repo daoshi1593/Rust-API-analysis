@@ -237,10 +237,6 @@ class APIAnalyzer(App):
         background: #3d3d3d;
         color: #ffffff;
     }
-    
-    #path_input::placeholder {
-        color: #888888;
-    }
     """
     
     def on_mount(self) -> None:
